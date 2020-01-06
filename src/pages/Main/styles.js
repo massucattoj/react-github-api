@@ -5,9 +5,13 @@ export const Form = styled.form`
   display: flex;
   flex-direction: row;
 
+  /**
+    Como error eh uma propriedade enviada pelo form pode-se utilizar
+    o conceitos de propriedade para mudar os parametros como por exemplo a borda
+   */
   input {
     flex: 1;
-    border: 1px solid #eee;
+    border: 1px solid ${props => (props.error ? '#ff6b6b' : '#eee')};
     padding: 10px 15px;
     border-radius: 4px;
     font-size: 16px;

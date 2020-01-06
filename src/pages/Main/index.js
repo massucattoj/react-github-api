@@ -13,6 +13,7 @@ export default class Main extends Component {
     newRepo: '',
     repositories: [],
     loading: false,
+    error: false,
   };
 
   // Carregar os dados do localStorage
@@ -37,30 +38,54 @@ export default class Main extends Component {
   }
 
   handleInputChange = e => {
-    this.setState({ newRepo: e.target.value });
+    this.setState({ newRepo: e.target.value, error: false });
   };
 
   handleSubmit = async e => {
     e.preventDefault(); // evitar que o form faca refresh na pagina
 
-    this.setState({ loading: true }); // antes de fazer a requisicao para api mudar o estado do botao
+    // antes de fazer a requisicao para api mudar o estado do botao
+    this.setState({ loading: true, error: false });
 
-    const { newRepo, repositories } = this.state;
-    const response = await api.get(`/repos/${newRepo}`);
+    /**
+     * Adicionar try/catch
+     *  try {
+     *   -> faz alguma coisa que pode dar erro. no caso procurar um repositorio
+     *      e este repositorio nao existe
+     *
+     *  } cath (error) {
+     *    this.setState(error)
+     *  }
+     *
+     */
+    try {
+      // desestruturacao para pegar os valores do estado
+      const { newRepo, repositories } = this.state;
 
-    const data = {
-      name: response.data.full_name,
-    };
+      const existRepo = repositories.find(r => r.name === newRepo);
+      // eslint-disable-next-line
+      if (existRepo) throw 'Repository already exist';
 
-    this.setState({
-      repositories: [...repositories, data], // copiar tudo que ja tem nela ...repositories e adicionar data
-      newRepo: '',
-      loading: false,
-    });
+      // procurar um repositorio utilizando a api do github (Chamada na API)
+      const response = await api.get(`/repos/${newRepo}`);
+
+      const data = {
+        name: response.data.full_name,
+      };
+
+      this.setState({
+        repositories: [...repositories, data], // copiar tudo que ja tem nela ...repositories e adicionar data
+        newRepo: '',
+      });
+    } catch (error) {
+      this.setState({ error: true });
+    } finally {
+      this.setState({ loading: false });
+    }
   };
 
   render() {
-    const { newRepo, repositories, loading } = this.state;
+    const { newRepo, repositories, loading, error } = this.state;
 
     return (
       <Container>
@@ -69,7 +94,7 @@ export default class Main extends Component {
           Repositórios
         </h1>
 
-        <Form onSubmit={this.handleSubmit}>
+        <Form onSubmit={this.handleSubmit} error={error}>
           <input
             type="text"
             placeholder="Adicionar Repositório"
